@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="26351操行分">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <title>26351操行分</title>
-<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-192.png"><link rel="icon" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest?v=2"><link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=2"><link rel="icon" href="icon-192.png?v=2">
 <style>
 :root{--ink:#1B2430;--muted:#5B6573;--line:#E2E6EB;--line2:#D5DAE1;--bg:#F4F6F8;--card:#FFFFFF;--blue:#1D5FD1;--blue-l:#E8F0FD;--orange:#C2410C;--orange-l:#FDEEE6;--green:#1F7A4D;--radius:12px;
   --font:"Microsoft YaHei","PingFang SC","Hiragino Sans GB","Noto Sans CJK SC","Noto Sans SC",system-ui,sans-serif}
@@ -1495,6 +1495,7 @@ function copyText(text) {
   var ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select();
   var ok = false; try { ok = document.execCommand('copy'); } catch (e) { } ta.remove(); return Promise.resolve(ok);
 }
+function isDesktop() { try { return !/Android|iPhone|iPad|iPod|Mobile|HarmonyOS/i.test(navigator.userAgent) && window.matchMedia('(pointer:fine)').matches; } catch (e) { return false; } }
 function stuById(id) { for (var i = 0; i < S.students.length; i++) if (S.students[i].id === id) return S.students[i]; return null; }
 function stuName(id) { var s = stuById(id); return s ? s.name : '(未知)'; }
 function curYm() { return CX.ymOf(CX.today()); }
@@ -1600,8 +1601,11 @@ function recSendView() {
   else {
     var days = {}; un.forEach(function (r) { days[r.d] = (days[r.d] || 0) + 1; });
     o += '<p>有 <b class="minus">' + un.length + '</b> 条记录还没发送（' + Object.keys(days).sort().map(function (d) { return CX.fmtD(d) + ' ' + days[d] + '条'; }).join('，') + '）</p>' +
-      '<div class="btns" style="flex-direction:column;align-items:stretch"><button class="btn lg pri" data-act="sendShare">' + icon('send') + ' 生成记录包，分享到微信</button>' +
-      '<button class="btn" data-act="sendCopy">复制为文字（粘贴到微信发送）</button><button class="btn" data-act="sendDownload">只下载文件</button></div>' +
+      (isDesktop() ?
+        '<div class="btns" style="flex-direction:column;align-items:stretch"><button class="btn lg pri" data-act="sendDownload">' + icon('send') + ' 生成记录包文件（再用电脑微信发给班主任）</button>' +
+        '<button class="btn" data-act="sendCopy">复制为文字（粘贴到微信发送）</button></div>' :
+        '<div class="btns" style="flex-direction:column;align-items:stretch"><button class="btn lg pri" data-act="sendShare">' + icon('send') + ' 生成记录包，分享到微信</button>' +
+        '<button class="btn" data-act="sendCopy">复制为文字（粘贴到微信发送）</button><button class="btn" data-act="sendDownload">只下载文件</button></div>') +
       '<p class="mut small" style="margin-bottom:0">发出去后会标记为“已发送”。如果没发成功，可在下面“发送记录”里重新发送，班主任电脑会自动去重。</p>';
   }
   o += '</div>';
@@ -1617,7 +1621,7 @@ function recMoreView() {
   return '<div class="card"><h2>更新名单和规则</h2><p class="mut small">班主任改了名单或规则后，会发来新的「配置包」。' + (S.meta.configAt ? '当前配置：' + h(S.meta.configAt.slice(0, 16).replace('T', ' ')) : '') + '</p>' + cfgImportBox() + '</div>' +
     '<div class="card"><h2>代码速查</h2><input class="inp" placeholder="搜代码或名称" data-on="codeSearch"><div class="codelist" id="codeSearchList">' + codeListHtml(rules, '') + '</div></div>' +
     '<div class="card"><h2>学号对照</h2><div class="pick">' + CX.activeStudents(S).map(function (s) { return '<button disabled><b>' + s.no + '</b> ' + h(s.name) + '<small>' + (s.day ? '走读' : h(s.dorm || '')) + '</small></button>'; }).join('') + '</div></div>' +
-    '<div class="card"><h2>每天怎么用</h2><ol style="margin:0;padding-left:20px;line-height:1.9"><li>拿到当天的各张登记表（值日、卫生、请假、作业、惩罚落实、宿舍长报的）。</li><li>「录入」：选登记表和时段，输入学号和代码，点「记录」。多人同一件事，学号用空格隔开。</li><li>录完点「发送 → 生成记录包，分享到微信」，发给班主任。</li><li>录完的纸表右上角勾「已录入」并签名。</li></ol></div>' +
+    '<div class="card"><h2>每天怎么用</h2><ol style="margin:0;padding-left:20px;line-height:1.9"><li>拿到当天的各张登记表（值日、卫生、请假、作业、惩罚落实、宿舍长报的）。</li><li>「录入」：选登记表和时段，输入学号和代码，点「记录」。多人同一件事，学号用空格隔开。</li><li>录完点「发送」生成记录包，用微信发给班主任（电脑上录的，把保存的文件用电脑微信发过去）。</li><li>录完的纸表右上角勾「已录入」并签名。</li></ol></div>' +
     '<div class="card"><h2>这台手机</h2><p class="mut small">录入人：' + h(D.name) + '。本机共 ' + S.records.length + ' 条记录。</p><div class="btns"><button class="btn" data-act="renameRec">修改录入人</button><button class="btn" data-act="cleanSent">清理30天前已发送的记录</button><button class="btn danger" data-act="resetDevice">重置这台设备</button></div>' +
     '<p class="mut small">苹果手机请用 Safari 打开，并点「分享 → 添加到主屏幕」，这样数据不会被清理。不要在微信里直接打开。</p></div>';
 }
@@ -2413,7 +2417,8 @@ var ACT = {
   sentOk: function () { if (V.pendingSend) markSent(V.pendingSend.ids, V.pendingSend.pid); V.pendingSend = null; closeModal(); toast('已标记为已发送'); },
   resend: function (a) {
     var p = (D.pkgs || []).filter(function (x) { return x.id === a.dataset.id; })[0]; if (!p) return;
-    var pkg = makePkg(p.ids); shareFile(new Blob([JSON.stringify(pkg)], { type: 'text/plain' }), pkgName(pkg)).then(function (res) { if (res) toast('已重新生成'); });
+    var pkg = makePkg(p.ids), blob = new Blob([JSON.stringify(pkg)], { type: 'text/plain' });
+    (isDesktop() ? download(blob, pkgName(pkg)) : shareFile(blob, pkgName(pkg))).then(function (res) { if (res) toast('已重新生成'); });
   },
   cfgPaste: function () { CX.decodeAny(document.getElementById('cfgText').value).then(applyCfgObj, function (e) { toast(e.message); }); },
   renameRec: function () { modal('<h2>修改录入人</h2><input class="inp" id="recname" value="' + h(D.name) + '" autofocus><div class="btns" style="margin-top:14px"><button class="btn pri" data-act="renameOk">确定</button><button class="btn" data-act="closeModal">取消</button></div>'); },
